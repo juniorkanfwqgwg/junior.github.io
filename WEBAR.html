@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สแกน QR Code AR</title>
+    <!-- เรียกใช้ A-Frame และ AR.js -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r129/examples/js/loaders/FBXLoader.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            width: 100vw; /* ปรับขนาดให้เต็มหน้าจอ */
+            height: 100vh; /* ปรับขนาดให้เต็มหน้าจอ */
+        }
+
+        #arView {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #arView canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ฟิลเตอร์วิดีโอและขนาด */
+        #arView video {
+            transform: scaleX(-1); /* กลับด้านแนวนอน */
+            -webkit-filter: grayscale(50%) sepia(20%);
+            filter: grayscale(50%) sepia(20%);
+            width: 95vw;  /* ลดขนาดเป็น 95% ของหน้าจอ */
+            height: 95vh; /* ลดขนาดเป็น 95% ของหน้าจอ */
+            object-fit: cover; /* ครอบวิดีโอให้อยู่ในกรอบ */
+        }
+
+        #scanner {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="scanner">
+    <h1>สแกน QR Code AR</h1>
+    <p>นำกล้องของคุณสแกน QR Code เพื่อแสดงโมเดล 3D</p>
+    <button id="startScan">เริ่มการสแกน</button>
+</div>
+
+<!-- ซ่อนส่วนการแสดง AR ก่อนจนกว่าจะสแกนสำเร็จ -->
+<div id="arView" style="display:none;">
+    <a-scene embedded arjs="sourceType: webcam;" vr-mode-ui="enabled: false"> <!-- ลบลายน้ำ VR -->
+        <a-marker preset="hiro">
+            <a-entity id="fbxModel"></a-entity>
+        </a-marker>
+        <a-entity camera></a-entity>
+    </a-scene>
+    <button id="exitAR">ออกจาก AR</button>
+</div>
+
+<script>
+// เมื่อคลิกเริ่มการสแกน ให้ขอสิทธิ์การเข้าถึงกล้อง
+document.getElementById('startScan').addEventListener('click', () => {
+    // ขอการเข้าถึงกล้องหลัง (หรือเปลี่ยนเป็นกล้องหน้าได้ตามต้องการ)
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } })
+    .then((stream) => {
+        // สิทธิ์กล้องได้รับการอนุมัติ
+        startQRCodeScanner();
+    })
+    .catch((err) => {
+        alert('ไม่สามารถเข้าถึงกล้องได้: ' + err);
+    });
+});
+
+// ฟังก์ชันการแสดงผล AR หลังจากการสแกน QR Code สำเร็จ
+function startQRCodeScanner() {
+    document.getElementById('scanner').style.display = 'none';
+    document.getElementById('arView').style.display = 'block';
+
+    // โหลดโมเดล FBX และแสดงผลในตำแหน่งของ marker
+    var loader = new THREE.FBXLoader();
+    loader.load('path_to_fbx_file.fbx', function(object) {
+        var model = document.querySelector('#fbxModel');
+        model.setObject3D('mesh', object);
+    });
+}
+
+// เมื่อคลิกปุ่ม "ออกจาก AR"
+document.getElementById('exitAR').addEventListener('click', () => {
+    document.getElementById('arView').style.display = 'none';
+    document.getElementById('scanner').style.display = 'block';
+});
+</script>
+
+</body>
+</html>
